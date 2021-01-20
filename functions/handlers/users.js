@@ -97,11 +97,15 @@ exports.uploadImage = (req, res) => {
     let imageFileName;
     let imageToBeUploaded = {};
 
-    busboy.on('file', (fieldname, file, filename, encoding, mimtype) => {
+    busboy.on('file', (fieldname, file, filename, encoding, mimetype) => {
+        if (mimetype !== 'image/jpeg' && mimetype !== 'image/png') {
+            return res.status(400).json({ error: 'Wrong file type submitted.'});
+        }
+
         const imageExtension = filename.split('.')[filename.split('.').length -1];
         imageFileName = `${Math.round(Math.random() * 1000000)}.${imageExtension}`;
         const filepath = path.join(os.tempdir(), imageFileName);
-        imageToBeUploaded = { filepath, mimtype};
+        imageToBeUploaded = { filepath, mimetype};
         file.pipe(fs.createWriteStream(filepath));
     });
     busboy.on('finish', () => {
@@ -109,7 +113,7 @@ exports.uploadImage = (req, res) => {
             resumable: false,
             metadata: {
                 metadata: {
-                    contentType: imageToBeUploaded.mimtype
+                    contentType: imageToBeUploaded.mimetype
                 }
             }
         })
